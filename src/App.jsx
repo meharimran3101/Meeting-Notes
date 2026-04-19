@@ -3,392 +3,416 @@ import './App.css'
 
 const meetingPresets = [
   {
-    id: 'product',
-    label: 'Product Sync',
-    title: 'Monday product sync',
+    id: 'launch',
+    label: 'Launch Review',
+    title: 'Q3 launch readiness review',
+    team: 'Growth + Product',
     attendees: ['Amina', 'Rayan', 'Imran', 'Zoya'],
-    transcript: `Amina: The onboarding funnel is losing users after the workspace step.
-Rayan: I can redesign the checklist and ship the new empty state by Thursday.
-Imran: We also need analytics on invite clicks and activation time.
-Zoya: I will interview five new users this week and share clips in Slack.
-Amina: Let's review metrics again on Friday at 3 PM and decide whether to expand the rollout.`,
+    transcript: `Amina: We are still seeing a sharp drop after users finish the workspace step.
+Rayan: I will redesign the onboarding checklist and hand off final screens by Thursday evening.
+Imran: Analytics still needs invite click tracking and activation time events before launch.
+Zoya: I will interview five brand new users this week and post the clips in Slack.
+Amina: We should review the updated funnel numbers on Friday at 3 PM before expanding rollout.`,
   },
   {
-    id: 'sales',
-    label: 'Sales Review',
-    title: 'Enterprise pipeline review',
+    id: 'pipeline',
+    label: 'Pipeline Call',
+    title: 'Enterprise pipeline blocker call',
+    team: 'Sales',
     attendees: ['Hassan', 'Nida', 'Sara'],
-    transcript: `Hassan: The Atlas deal is blocked on security documents and pricing approval.
-Nida: I will send the updated security packet today and book a follow-up for Wednesday.
-Sara: Finance needs a discount justification before approving the custom contract.
-Hassan: Let's keep legal out until the buyer confirms redlines.
-Nida: I will own the weekly status email so the client sees momentum.`,
+    transcript: `Hassan: The Atlas deal is blocked on the security packet and pricing approval.
+Nida: I will send the updated security documentation today and book a follow-up for Wednesday morning.
+Sara: Finance needs a short discount justification before signing off on the custom contract.
+Hassan: Let's keep legal on standby until the buyer confirms the redlines.
+Nida: I will own the weekly status email so the client can see visible momentum.`,
   },
   {
-    id: 'ops',
-    label: 'Ops Standup',
-    title: 'Operations incident review',
+    id: 'incident',
+    label: 'Incident Retro',
+    title: 'Ops incident review',
+    team: 'Operations',
     attendees: ['Bilal', 'Maha', 'Omar'],
-    transcript: `Bilal: Yesterday's outage came from the failed cache warmup job after deploy.
-Maha: I can add an alert and a rollback checklist before the next release.
+    transcript: `Bilal: Yesterday's outage started after the cache warmup job failed right after deploy.
+Maha: I can add an alert, a rollback checklist, and a smoke-test gate before the next release.
 Omar: Support needs a customer-ready incident summary by noon.
-Bilal: We'll freeze non-critical deploys until we verify the recovery steps.
+Bilal: We should freeze non-critical deploys until recovery steps are verified end to end.
 Maha: I will run the postmortem and present preventive fixes tomorrow morning.`,
   },
 ]
 
-const highlightStats = [
-  { value: '92%', label: 'less follow-up drift' },
-  { value: '4.8x', label: 'faster action capture' },
-  { value: '11', label: 'signals tracked per meeting' },
+const featureRail = [
+  'Transcript import',
+  'Live AI extraction',
+  'Owner detection',
+  'Follow-up draft',
 ]
 
-const workflowSteps = [
-  'Ingest transcript',
-  'Detect decisions',
-  'Assign owners',
-  'Schedule follow-ups',
-]
+const integrations = ['Zoom', 'Meet', 'Teams', 'Slack', 'Notion', 'Linear']
 
-const integrationPills = [
-  'Zoom',
-  'Google Meet',
-  'Teams',
-  'Slack',
-  'Notion',
-  'Linear',
-]
-
-function buildInsights(transcript, attendees) {
-  const names = attendees.map((person) => person.toLowerCase())
+function buildFallbackInsights(transcript, attendees, title) {
   const lines = transcript
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
 
-  const actions = lines
-    .filter((line) => /\b(i will|can|need to|let's|we'll|ship|send|review|book)\b/i.test(line))
+  const actionItems = lines
+    .filter((line) => /\b(i will|we should|can|needs|review|book|send|add|freeze)\b/i.test(line))
     .slice(0, 5)
     .map((line, index) => {
-      const owner = attendees.find((person) =>
-        line.toLowerCase().startsWith(person.toLowerCase()),
-      ) ?? attendees[index % attendees.length]
-
+      const owner =
+        attendees.find((person) => line.toLowerCase().startsWith(person.toLowerCase())) ??
+        attendees[index % attendees.length] ??
+        'Unassigned'
       const due =
         line.match(/\b(today|tomorrow|thursday|friday|wednesday|noon|this week|next release)\b/i)?.[0] ??
-        ['Today', 'Tomorrow', 'Thu', 'Fri', 'This week'][index % 5]
+        ['Today', 'Tomorrow', 'This week', 'Fri', 'Next release'][index % 5]
 
       return {
         id: `${owner}-${index}`,
+        title: line.replace(/^[^:]+:\s*/, ''),
         owner,
         due,
-        title: line.replace(/^[^:]+:\s*/, ''),
-        status: index === 0 ? 'High impact' : index === 1 ? 'In progress' : 'Queued',
+        priority: index === 0 ? 'Critical' : index === 1 ? 'High' : 'Normal',
       }
     })
 
-  const decisions = lines
-    .filter((line) => /\b(decide|review|freeze|blocked|rollout|approval)\b/i.test(line))
+  const keyDecisions = lines
+    .filter((line) => /\b(review|freeze|blocked|launch|rollout|standby)\b/i.test(line))
     .slice(0, 3)
     .map((line) => line.replace(/^[^:]+:\s*/, ''))
 
   const risks = lines
-    .filter((line) => /\b(blocked|outage|failed|needs|freeze)\b/i.test(line))
+    .filter((line) => /\b(blocked|failed|needs|drop|outage|freeze)\b/i.test(line))
     .slice(0, 3)
     .map((line) => line.replace(/^[^:]+:\s*/, ''))
 
-  const summary = lines
-    .slice(0, 3)
-    .map((line) => line.replace(/^[^:]+:\s*/, ''))
-    .join(' ')
-
-  const mentions = names.reduce((count, name) => {
-    return count + (transcript.toLowerCase().match(new RegExp(name, 'g'))?.length ?? 0)
-  }, 0)
+  const tags = Array.from(
+    new Set(
+      (transcript.match(/\b(launch|analytics|customer|pricing|incident|support|rollout|security)\b/gi) ?? []).map(
+        (item) => item.toLowerCase(),
+      ),
+    ),
+  ).slice(0, 4)
 
   return {
-    summary,
-    actions,
-    decisions,
+    headline: `${title} distilled into clear next steps`,
+    summary: lines
+      .slice(0, 3)
+      .map((line) => line.replace(/^[^:]+:\s*/, ''))
+      .join(' '),
+    actionItems,
+    keyDecisions,
     risks,
-    metrics: {
-      actionCount: actions.length,
-      speakerCount: attendees.length,
-      mentionCount: mentions,
-    },
+    tags,
+    followUpEmail: `Team, here is the recap from ${title}. Top priorities: ${actionItems
+      .slice(0, 2)
+      .map((item) => `${item.owner} owns "${item.title}"`)
+      .join('; ')}. Main risks: ${risks.join('; ') || 'none identified'}.`,
+    confidence: 0.62,
+  }
+}
+
+function normalizeAnalysis(payload, fallbackBase) {
+  if (!payload) {
+    return fallbackBase
+  }
+
+  return {
+    headline: payload.headline || fallbackBase.headline,
+    summary: payload.summary || fallbackBase.summary,
+    actionItems: Array.isArray(payload.actionItems) && payload.actionItems.length
+      ? payload.actionItems.map((item, index) => ({
+          id: item.id || `${item.owner || 'item'}-${index}`,
+          title: item.title || fallbackBase.actionItems[index]?.title || 'Action item',
+          owner: item.owner || fallbackBase.actionItems[index]?.owner || 'Unassigned',
+          due: item.due || fallbackBase.actionItems[index]?.due || 'TBD',
+          priority: item.priority || fallbackBase.actionItems[index]?.priority || 'Normal',
+        }))
+      : fallbackBase.actionItems,
+    keyDecisions:
+      Array.isArray(payload.keyDecisions) && payload.keyDecisions.length
+        ? payload.keyDecisions
+        : fallbackBase.keyDecisions,
+    risks: Array.isArray(payload.risks) && payload.risks.length ? payload.risks : fallbackBase.risks,
+    tags: Array.isArray(payload.tags) && payload.tags.length ? payload.tags : fallbackBase.tags,
+    followUpEmail: payload.followUpEmail || fallbackBase.followUpEmail,
+    confidence: typeof payload.confidence === 'number' ? payload.confidence : fallbackBase.confidence,
   }
 }
 
 function App() {
   const [selectedPreset, setSelectedPreset] = useState(meetingPresets[0])
   const [transcript, setTranscript] = useState(meetingPresets[0].transcript)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [generatedMeeting, setGeneratedMeeting] = useState(() =>
-    buildInsights(meetingPresets[0].transcript, meetingPresets[0].attendees),
+  const [analysis, setAnalysis] = useState(() =>
+    buildFallbackInsights(
+      meetingPresets[0].transcript,
+      meetingPresets[0].attendees,
+      meetingPresets[0].title,
+    ),
   )
+  const [status, setStatus] = useState('idle')
+  const [source, setSource] = useState('local')
+  const [note, setNote] = useState('Ready to analyze with AI.')
 
   const deferredTranscript = useDeferredValue(transcript)
-  const liveMetrics = useMemo(() => {
-    const words = deferredTranscript.trim() ? deferredTranscript.trim().split(/\s+/).length : 0
-    const lines = deferredTranscript.trim() ? deferredTranscript.trim().split('\n').length : 0
-    const actionSignals = (deferredTranscript.match(/\b(will|need|review|ship|send|follow-up|next)\b/gi) ?? []).length
+  const liveStats = useMemo(() => {
+    const trimmed = deferredTranscript.trim()
+    const words = trimmed ? trimmed.split(/\s+/).length : 0
+    const lines = trimmed ? trimmed.split('\n').length : 0
+    const signalCount = (trimmed.match(/\b(will|should|need|review|send|add|follow-up|launch|blocked)\b/gi) ?? []).length
 
-    return { words, lines, actionSignals }
+    return { words, lines, signalCount }
   }, [deferredTranscript])
 
-  const handlePreset = (preset) => {
+  const applyPreset = (preset) => {
+    const fallback = buildFallbackInsights(preset.transcript, preset.attendees, preset.title)
     setSelectedPreset(preset)
     setTranscript(preset.transcript)
+    setSource('local')
+    setNote('Preset loaded. Run AI analysis when you are ready.')
     startTransition(() => {
-      setGeneratedMeeting(buildInsights(preset.transcript, preset.attendees))
+      setAnalysis(fallback)
     })
   }
 
-  const handleGenerate = () => {
-    setIsGenerating(true)
+  const analyzeMeeting = async () => {
+    const fallback = buildFallbackInsights(transcript, selectedPreset.attendees, selectedPreset.title)
+    setStatus('loading')
+    setNote('Running live analysis and extracting ownership...')
 
-    window.setTimeout(() => {
-      startTransition(() => {
-        setGeneratedMeeting(buildInsights(transcript, selectedPreset.attendees))
-        setIsGenerating(false)
+    try {
+      const response = await fetch('/api/analyze-meeting', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: selectedPreset.title,
+          team: selectedPreset.team,
+          attendees: selectedPreset.attendees,
+          transcript,
+        }),
       })
-    }, 1100)
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => ({}))
+        throw new Error(errorPayload.error || 'Live analysis failed')
+      }
+
+      const payload = await response.json()
+
+      startTransition(() => {
+        setAnalysis(normalizeAnalysis(payload.analysis, fallback))
+        setSource(payload.source || 'live')
+        setStatus('success')
+        setNote(
+          payload.source === 'live'
+            ? 'Live AI analysis complete.'
+            : 'Fallback analysis used because live AI is not configured.',
+        )
+      })
+    } catch (error) {
+      startTransition(() => {
+        setAnalysis(fallback)
+        setSource('fallback')
+        setStatus('success')
+        setNote(`${error.message}. Showing the local fallback version instead.`)
+      })
+    }
   }
 
   return (
-    <main className="shell">
-      <div className="ambient ambient-left" />
-      <div className="ambient ambient-right" />
+    <main className="app-shell">
+      <div className="noise" />
 
-      <section className="hero-panel">
-        <nav className="topbar">
-          <div className="brand">
-            <div className="brand-mark">MN</div>
+      <section className="hero">
+        <header className="masthead">
+          <div className="brand-lockup">
+            <div className="brand-mark">MA</div>
             <div>
-              <p className="eyebrow">Meeting Intelligence Suite</p>
+              <p className="micro-copy">Meeting intelligence, rebuilt</p>
               <h1>Meeting to Action Notes</h1>
             </div>
           </div>
 
-          <div className="topbar-actions">
-            <span className="status-pill">
-              <span className="status-dot" />
-              Live workspace
+          <div className="status-cluster">
+            <span className={source === 'live' ? 'source-pill live' : 'source-pill'}>
+              {source === 'live' ? 'Live AI' : source === 'fallback' ? 'Fallback mode' : 'Local preview'}
             </span>
-            <button type="button" className="ghost-button">
-              Publish notes
+            <button type="button" className="primary-button compact" onClick={analyzeMeeting}>
+              {status === 'loading' ? 'Analyzing...' : 'Analyze meeting'}
             </button>
           </div>
-        </nav>
+        </header>
 
         <div className="hero-grid">
           <div className="hero-copy">
-            <p className="section-tag">Turn conversations into momentum</p>
-            <h2>
-              A cinematic workspace that converts messy meeting chatter into clear
-              owners, deadlines, and next moves.
-            </h2>
-            <p className="hero-text">
-              Built for modern teams that need instant clarity after product syncs,
-              client calls, and operational reviews. Paste a transcript, simulate
-              AI extraction, and watch action lanes assemble in real time.
+            <p className="section-label">Turn discussion into decisions</p>
+            <h2>Less shiny dashboard, more command center for what the meeting actually means.</h2>
+            <p className="lede">
+              Paste a transcript and the app creates a concise summary, clear owners,
+              visible risks, and a follow-up draft your team can actually send.
             </p>
 
-            <div className="hero-actions">
-              <button type="button" className="primary-button" onClick={handleGenerate}>
-                Generate action notes
-              </button>
-              <button type="button" className="secondary-button">
-                Watch workflow
-              </button>
-            </div>
-
-            <div className="stats-row">
-              {highlightStats.map((stat) => (
-                <article key={stat.label} className="stat-card">
-                  <strong>{stat.value}</strong>
-                  <span>{stat.label}</span>
-                </article>
+            <div className="feature-rail">
+              {featureRail.map((item) => (
+                <span key={item}>{item}</span>
               ))}
             </div>
+
+            <p className="status-note">{note}</p>
           </div>
 
-          <div className="hero-visual">
-            <div className="orbital-ring orbital-ring-a" />
-            <div className="orbital-ring orbital-ring-b" />
-            <div className="visual-card main-visual-card">
-              <div className="visual-card-header">
-                <span>Signal engine</span>
-                <span>{selectedPreset.title}</span>
-              </div>
-              <div className="visual-wave">
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-              </div>
-              <div className="workflow-list">
-                {workflowSteps.map((step, index) => (
-                  <div key={step} className="workflow-item">
-                    <span>{`0${index + 1}`}</span>
-                    <p>{step}</p>
-                  </div>
-                ))}
-              </div>
+          <aside className="hero-sidecard">
+            <p className="section-label">Live canvas</p>
+            <div className="signal-graph" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
             </div>
-            <div className="visual-card floating-card">
-              <p>Focus score</p>
-              <strong>87</strong>
-              <span>Teams aligned around owners and dates</span>
+            <div className="side-metrics">
+              <article>
+                <span>Words</span>
+                <strong>{liveStats.words}</strong>
+              </article>
+              <article>
+                <span>Lines</span>
+                <strong>{liveStats.lines}</strong>
+              </article>
+              <article>
+                <span>Signals</span>
+                <strong>{liveStats.signalCount}</strong>
+              </article>
             </div>
-          </div>
+          </aside>
         </div>
       </section>
 
-      <section className="workspace-grid">
-        <article className="panel transcript-panel">
-          <div className="panel-header">
+      <section className="workspace">
+        <article className="capture-panel">
+          <div className="panel-topline">
             <div>
-              <p className="section-tag">Transcript Lab</p>
-              <h3>Drop in the meeting and shape the narrative</h3>
+              <p className="section-label">Capture</p>
+              <h3>Transcript workspace</h3>
             </div>
-            <div className="preset-row">
+            <div className="preset-list">
               {meetingPresets.map((preset) => (
                 <button
                   key={preset.id}
                   type="button"
-                  className={preset.id === selectedPreset.id ? 'preset-chip active' : 'preset-chip'}
-                  onClick={() => handlePreset(preset)}
+                  className={preset.id === selectedPreset.id ? 'preset-button active' : 'preset-button'}
+                  onClick={() => applyPreset(preset)}
                 >
-                  {preset.label}
+                  <span>{preset.label}</span>
+                  <strong>{preset.team}</strong>
                 </button>
               ))}
             </div>
           </div>
 
-          <label className="transcript-box">
-            <span className="input-label">Meeting transcript</span>
+          <label className="transcript-field">
+            <span className="field-label">Paste meeting transcript</span>
             <textarea
               value={transcript}
               onChange={(event) => setTranscript(event.target.value)}
-              placeholder="Paste a meeting transcript here..."
+              placeholder="Paste your call notes, transcript, or raw meeting text..."
             />
           </label>
 
-          <div className="metrics-row">
-            <div>
-              <span>Words</span>
-              <strong>{liveMetrics.words}</strong>
-            </div>
-            <div>
-              <span>Lines</span>
-              <strong>{liveMetrics.lines}</strong>
-            </div>
-            <div>
-              <span>Action signals</span>
-              <strong>{liveMetrics.actionSignals}</strong>
-            </div>
-          </div>
-        </article>
-
-        <article className="panel intelligence-panel">
-          <div className="panel-header">
-            <div>
-              <p className="section-tag">Action Engine</p>
-              <h3>See the meeting resolved into decisions and tasks</h3>
-            </div>
-            <button type="button" className="primary-button compact" onClick={handleGenerate}>
-              {isGenerating ? 'Analyzing...' : 'Run extraction'}
-            </button>
-          </div>
-
-          <div className={isGenerating ? 'processing-card active' : 'processing-card'}>
-            <div className="processing-bar" />
-            <div>
-              <p>Inference status</p>
-              <strong>{isGenerating ? 'Parsing ownership and deadlines...' : 'Ready to synthesize'}</strong>
-            </div>
-          </div>
-
-          <div className="summary-card">
-            <p className="section-tag">AI summary</p>
-            <h4>{selectedPreset.title}</h4>
-            <p>{generatedMeeting.summary}</p>
-          </div>
-
-          <div className="insight-grid">
-            <div className="mini-panel">
-              <span>Actions</span>
-              <strong>{generatedMeeting.metrics.actionCount}</strong>
-            </div>
-            <div className="mini-panel">
-              <span>Speakers</span>
-              <strong>{generatedMeeting.metrics.speakerCount}</strong>
-            </div>
-            <div className="mini-panel">
-              <span>Mentions</span>
-              <strong>{generatedMeeting.metrics.mentionCount}</strong>
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <section className="action-board">
-        <div className="section-heading">
-          <div>
-            <p className="section-tag">Execution board</p>
-            <h3>Every important follow-up, already organized</h3>
-          </div>
-          <div className="integration-strip">
-            {integrationPills.map((item) => (
+          <div className="integration-row">
+            {integrations.map((item) => (
               <span key={item}>{item}</span>
             ))}
           </div>
-        </div>
+        </article>
 
-        <div className="board-grid">
-          <article className="panel lane">
-            <p className="lane-title">Action items</p>
-            <div className="lane-stack">
-              {generatedMeeting.actions.map((action) => (
-                <div key={action.id} className="action-card">
-                  <div className="action-meta">
-                    <span>{action.owner}</span>
-                    <span>{action.due}</span>
-                  </div>
-                  <h4>{action.title}</h4>
-                  <p>{action.status}</p>
-                </div>
-              ))}
+        <article className="results-panel">
+          <div className="panel-topline">
+            <div>
+              <p className="section-label">Output</p>
+              <h3>{analysis.headline}</h3>
             </div>
-          </article>
+            <div className="confidence-card">
+              <span>Confidence</span>
+              <strong>{Math.round(analysis.confidence * 100)}%</strong>
+            </div>
+          </div>
 
-          <article className="panel lane">
-            <p className="lane-title">Key decisions</p>
-            <div className="note-stack">
-              {generatedMeeting.decisions.map((decision) => (
-                <div key={decision} className="note-card">
-                  <span>Decision</span>
-                  <p>{decision}</p>
-                </div>
-              ))}
-            </div>
-          </article>
+          <div className="summary-block">
+            <p className="field-label">Summary</p>
+            <p>{analysis.summary}</p>
+          </div>
 
-          <article className="panel lane">
-            <p className="lane-title">Risks to watch</p>
-            <div className="note-stack">
-              {generatedMeeting.risks.map((risk) => (
-                <div key={risk} className="note-card warning">
-                  <span>Risk</span>
-                  <p>{risk}</p>
-                </div>
-              ))}
+          <div className="chips">
+            {analysis.tags.map((tag) => (
+              <span key={tag}>{tag}</span>
+            ))}
+          </div>
+
+          <div className="results-grid">
+            <section className="column-card actions-column">
+              <div className="column-heading">
+                <p className="field-label">Action items</p>
+                <span>{analysis.actionItems.length} items</span>
+              </div>
+
+              <div className="stack">
+                {analysis.actionItems.map((item) => (
+                  <article key={item.id} className="action-item">
+                    <div className="meta-row">
+                      <span>{item.owner}</span>
+                      <span>{item.due}</span>
+                    </div>
+                    <h4>{item.title}</h4>
+                    <p>{item.priority}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="column-card">
+              <div className="column-heading">
+                <p className="field-label">Key decisions</p>
+              </div>
+
+              <div className="stack">
+                {analysis.keyDecisions.map((item) => (
+                  <article key={item} className="note-item">
+                    <span>Decision</span>
+                    <p>{item}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="column-card">
+              <div className="column-heading">
+                <p className="field-label">Risks</p>
+              </div>
+
+              <div className="stack">
+                {analysis.risks.map((item) => (
+                  <article key={item} className="note-item risk">
+                    <span>Risk</span>
+                    <p>{item}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          <section className="follow-up-card">
+            <div className="column-heading">
+              <p className="field-label">Follow-up draft</p>
+              <span>Email-ready recap</span>
             </div>
-          </article>
-        </div>
+            <p>{analysis.followUpEmail}</p>
+          </section>
+        </article>
       </section>
     </main>
   )
