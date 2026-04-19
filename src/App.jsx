@@ -49,6 +49,37 @@ const featureRail = [
 
 const integrations = ['Zoom', 'Meet', 'Teams', 'Slack', 'Notion', 'Linear']
 
+function BrandGlyph() {
+  return (
+    <svg
+      className="brand-glyph"
+      viewBox="0 0 96 96"
+      role="img"
+      aria-label="Meeting to Action Notes logo"
+    >
+      <defs>
+        <linearGradient id="glyph-core" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#f5d0a9" />
+          <stop offset="100%" stopColor="#7ad0c4" />
+        </linearGradient>
+      </defs>
+      <rect x="6" y="6" width="84" height="84" rx="24" className="glyph-frame" />
+      <path
+        d="M26 61V34l16 18 16-18v27"
+        className="glyph-stroke glyph-main"
+        pathLength="1"
+      />
+      <path
+        d="M62 61V34l8 10 8-10v27"
+        className="glyph-stroke glyph-accent"
+        pathLength="1"
+      />
+      <circle cx="72" cy="25" r="5" className="glyph-dot" />
+      <path d="M18 72C28 63 38 59 48 59C58 59 68 63 78 72" className="glyph-wave" pathLength="1" />
+    </svg>
+  )
+}
+
 function buildFallbackInsights(transcript, attendees, title) {
   const lines = transcript
     .split('\n')
@@ -228,7 +259,9 @@ function App() {
       <section className="hero">
         <header className="masthead">
           <div className="brand-lockup">
-            <div className="brand-mark">MA</div>
+            <div className="brand-mark">
+              <BrandGlyph />
+            </div>
             <div>
               <p className="micro-copy">Meeting intelligence, rebuilt</p>
               <h1>Meeting to Action Notes</h1>
