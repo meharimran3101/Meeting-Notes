@@ -80,6 +80,10 @@ const serviceCards = [
   },
 ]
 
+const defaultWhatsappMessage = encodeURIComponent(
+  'Hello Muhammad Imran, I want to discuss a project with you.',
+)
+
 function BrandGlyph() {
   return (
     <svg
@@ -575,6 +579,65 @@ function AboutPage() {
           </p>
         </article>
       </div>
+
+      <section className="contact-form-section">
+        <div className="form-copy">
+          <p className="section-label">Contact us</p>
+          <h3>Send a direct message from the About page</h3>
+          <p>
+            Use the form below to send a project inquiry, or jump straight to WhatsApp
+            if you want a faster conversation.
+          </p>
+          <a
+            className="whatsapp-button"
+            href={`${profile.whatsappUrl}?text=${defaultWhatsappMessage}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Contact on WhatsApp
+          </a>
+        </div>
+
+        <form
+          className="contact-form"
+          name="contact"
+          method="POST"
+          data-netlify="true"
+          data-netlify-honeypot="bot-field"
+        >
+          <input type="hidden" name="form-name" value="contact" />
+          <input type="hidden" name="bot-field" />
+
+          <label>
+            <span className="field-label">Your name</span>
+            <input type="text" name="name" placeholder="Enter your name" required />
+          </label>
+
+          <label>
+            <span className="field-label">Your email</span>
+            <input type="email" name="email" placeholder="Enter your email" required />
+          </label>
+
+          <label>
+            <span className="field-label">Project type</span>
+            <input type="text" name="project" placeholder="Web app, Flutter app, security review..." />
+          </label>
+
+          <label>
+            <span className="field-label">Message</span>
+            <textarea
+              name="message"
+              rows="5"
+              placeholder="Tell me what you want to build or improve..."
+              required
+            />
+          </label>
+
+          <button type="submit" className="primary-button">
+            Send inquiry
+          </button>
+        </form>
+      </section>
     </section>
   )
 }
@@ -637,7 +700,11 @@ function ContactPage() {
         </article>
         <article className="contact-card">
           <p className="field-label">WhatsApp</p>
-          <a href={profile.whatsappUrl} target="_blank" rel="noreferrer">
+          <a
+            href={`${profile.whatsappUrl}?text=${defaultWhatsappMessage}`}
+            target="_blank"
+            rel="noreferrer"
+          >
             {profile.whatsapp}
           </a>
         </article>
@@ -645,6 +712,20 @@ function ContactPage() {
           <p className="field-label">Name</p>
           <span>{profile.name}</span>
         </article>
+      </div>
+
+      <div className="contact-actions">
+        <a
+          className="whatsapp-button"
+          href={`${profile.whatsappUrl}?text=${defaultWhatsappMessage}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Chat on WhatsApp
+        </a>
+        <a className="secondary-link" href={`mailto:${profile.email}`}>
+          Send email instead
+        </a>
       </div>
     </section>
   )
