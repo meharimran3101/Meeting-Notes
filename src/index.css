@@ -1,0 +1,45 @@
+:root {
+  font-family: 'Manrope', sans-serif;
+  color: #e5edf8;
+  background:
+    radial-gradient(circle at top, rgba(14, 165, 233, 0.18), transparent 34%),
+    radial-gradient(circle at 20% 20%, rgba(251, 113, 133, 0.18), transparent 28%),
+    linear-gradient(180deg, #07101f 0%, #020611 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+textarea,
+input {
+  font: inherit;
+}
+
+button {
+  appearance: none;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+}
