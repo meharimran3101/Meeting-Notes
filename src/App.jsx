@@ -88,6 +88,7 @@ const defaultEmailSubject = encodeURIComponent('Project inquiry for Muhammad Imr
 const defaultEmailBody = encodeURIComponent(
   'Hello Muhammad Imran,\n\nI would like to discuss a project with you.\n\nThanks.',
 )
+const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(profile.email)}&su=${defaultEmailSubject}&body=${defaultEmailBody}`
 
 function BrandGlyph() {
   return (
@@ -227,6 +228,12 @@ function normalizeAnalysis(payload, fallbackBase) {
 
 function openEmailDraft() {
   window.location.href = `mailto:${profile.email}?subject=${defaultEmailSubject}&body=${defaultEmailBody}`
+}
+
+function copyEmailAddress() {
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(profile.email)
+  }
 }
 
 function SiteLayout({ children }) {
@@ -734,6 +741,12 @@ function ContactPage() {
         </a>
         <button type="button" className="secondary-link secondary-button" onClick={openEmailDraft}>
           Send email instead
+        </button>
+        <a className="secondary-link" href={gmailComposeUrl} target="_blank" rel="noreferrer">
+          Open in Gmail
+        </a>
+        <button type="button" className="secondary-link secondary-button" onClick={copyEmailAddress}>
+          Copy email
         </button>
       </div>
     </section>
