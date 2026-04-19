@@ -1,5 +1,14 @@
 import { startTransition, useDeferredValue, useMemo, useState } from 'react'
+import { NavLink, Route, Routes } from 'react-router-dom'
 import './App.css'
+
+const profile = {
+  name: 'Muhammad Imran',
+  email: 'mimranaslam500@gmail.com',
+  whatsapp: '+923000233611',
+  whatsappUrl: 'https://wa.me/923000233611',
+  title: 'Cyber Security Specialist and App Developer',
+}
 
 const meetingPresets = [
   {
@@ -49,6 +58,28 @@ const featureRail = [
 
 const integrations = ['Zoom', 'Meet', 'Teams', 'Slack', 'Notion', 'Linear']
 
+const capabilities = [
+  'Cyber security',
+  'Web development',
+  'Flutter app development',
+  'React app development',
+]
+
+const serviceCards = [
+  {
+    title: 'Secure product thinking',
+    text: 'I bring a cyber security mindset into product work so the app experience stays useful without ignoring risk.',
+  },
+  {
+    title: 'Frontend execution',
+    text: 'Hands-on experience building responsive web apps, React products, and clean user interfaces that are practical to ship.',
+  },
+  {
+    title: 'Cross-platform delivery',
+    text: 'Experience with Flutter app development helps translate one product idea into mobile-ready flows and reusable design logic.',
+  },
+]
+
 function BrandGlyph() {
   return (
     <svg
@@ -75,7 +106,11 @@ function BrandGlyph() {
         pathLength="1"
       />
       <circle cx="72" cy="25" r="5" className="glyph-dot" />
-      <path d="M18 72C28 63 38 59 48 59C58 59 68 63 78 72" className="glyph-wave" pathLength="1" />
+      <path
+        d="M18 72C28 63 38 59 48 59C58 59 68 63 78 72"
+        className="glyph-wave"
+        pathLength="1"
+      />
     </svg>
   )
 }
@@ -151,27 +186,85 @@ function normalizeAnalysis(payload, fallbackBase) {
   return {
     headline: payload.headline || fallbackBase.headline,
     summary: payload.summary || fallbackBase.summary,
-    actionItems: Array.isArray(payload.actionItems) && payload.actionItems.length
-      ? payload.actionItems.map((item, index) => ({
-          id: item.id || `${item.owner || 'item'}-${index}`,
-          title: item.title || fallbackBase.actionItems[index]?.title || 'Action item',
-          owner: item.owner || fallbackBase.actionItems[index]?.owner || 'Unassigned',
-          due: item.due || fallbackBase.actionItems[index]?.due || 'TBD',
-          priority: item.priority || fallbackBase.actionItems[index]?.priority || 'Normal',
-        }))
-      : fallbackBase.actionItems,
+    actionItems:
+      Array.isArray(payload.actionItems) && payload.actionItems.length
+        ? payload.actionItems.map((item, index) => ({
+            id: item.id || `${item.owner || 'item'}-${index}`,
+            title: item.title || fallbackBase.actionItems[index]?.title || 'Action item',
+            owner: item.owner || fallbackBase.actionItems[index]?.owner || 'Unassigned',
+            due: item.due || fallbackBase.actionItems[index]?.due || 'TBD',
+            priority: item.priority || fallbackBase.actionItems[index]?.priority || 'Normal',
+          }))
+        : fallbackBase.actionItems,
     keyDecisions:
       Array.isArray(payload.keyDecisions) && payload.keyDecisions.length
         ? payload.keyDecisions
         : fallbackBase.keyDecisions,
-    risks: Array.isArray(payload.risks) && payload.risks.length ? payload.risks : fallbackBase.risks,
-    tags: Array.isArray(payload.tags) && payload.tags.length ? payload.tags : fallbackBase.tags,
+    risks:
+      Array.isArray(payload.risks) && payload.risks.length
+        ? payload.risks
+        : fallbackBase.risks,
+    tags:
+      Array.isArray(payload.tags) && payload.tags.length
+        ? payload.tags
+        : fallbackBase.tags,
     followUpEmail: payload.followUpEmail || fallbackBase.followUpEmail,
-    confidence: typeof payload.confidence === 'number' ? payload.confidence : fallbackBase.confidence,
+    confidence:
+      typeof payload.confidence === 'number'
+        ? payload.confidence
+        : fallbackBase.confidence,
   }
 }
 
-function App() {
+function SiteLayout({ children }) {
+  return (
+    <main className="site-shell">
+      <div className="noise" />
+      <header className="site-header">
+        <div className="brand-lockup">
+          <div className="brand-mark">
+            <BrandGlyph />
+          </div>
+          <div>
+            <p className="micro-copy">Meeting intelligence, rebuilt</p>
+            <h1>Meeting to Action Notes</h1>
+          </div>
+        </div>
+
+        <nav className="site-nav" aria-label="Main navigation">
+          <NavLink to="/" end>
+            Home
+          </NavLink>
+          <NavLink to="/about">About</NavLink>
+          <NavLink to="/about-us">About Us</NavLink>
+          <NavLink to="/contact">Contact</NavLink>
+        </nav>
+      </header>
+
+      {children}
+
+      <footer className="site-footer">
+        <div>
+          <p className="section-label">Built by</p>
+          <h3>{profile.name}</h3>
+          <p className="footer-copy">
+            {profile.title}. Hands-on experience in cyber security, web development,
+            Flutter app development, and React app development.
+          </p>
+        </div>
+
+        <div className="footer-links">
+          <a href={`mailto:${profile.email}`}>{profile.email}</a>
+          <a href={profile.whatsappUrl} target="_blank" rel="noreferrer">
+            {profile.whatsapp}
+          </a>
+        </div>
+      </footer>
+    </main>
+  )
+}
+
+function HomePage() {
   const [selectedPreset, setSelectedPreset] = useState(meetingPresets[0])
   const [transcript, setTranscript] = useState(meetingPresets[0].transcript)
   const [analysis, setAnalysis] = useState(() =>
@@ -190,7 +283,9 @@ function App() {
     const trimmed = deferredTranscript.trim()
     const words = trimmed ? trimmed.split(/\s+/).length : 0
     const lines = trimmed ? trimmed.split('\n').length : 0
-    const signalCount = (trimmed.match(/\b(will|should|need|review|send|add|follow-up|launch|blocked)\b/gi) ?? []).length
+    const signalCount =
+      trimmed.match(/\b(will|should|need|review|send|add|follow-up|launch|blocked)\b/gi)
+        ?.length ?? 0
 
     return { words, lines, signalCount }
   }, [deferredTranscript])
@@ -207,7 +302,11 @@ function App() {
   }
 
   const analyzeMeeting = async () => {
-    const fallback = buildFallbackInsights(transcript, selectedPreset.attendees, selectedPreset.title)
+    const fallback = buildFallbackInsights(
+      transcript,
+      selectedPreset.attendees,
+      selectedPreset.title,
+    )
     setStatus('loading')
     setNote('Running live analysis and extracting ownership...')
 
@@ -253,35 +352,12 @@ function App() {
   }
 
   return (
-    <main className="app-shell">
-      <div className="noise" />
-
+    <>
       <section className="hero">
-        <header className="masthead">
-          <div className="brand-lockup">
-            <div className="brand-mark">
-              <BrandGlyph />
-            </div>
-            <div>
-              <p className="micro-copy">Meeting intelligence, rebuilt</p>
-              <h1>Meeting to Action Notes</h1>
-            </div>
-          </div>
-
-          <div className="status-cluster">
-            <span className={source === 'live' ? 'source-pill live' : 'source-pill'}>
-              {source === 'live' ? 'Live AI' : source === 'fallback' ? 'Fallback mode' : 'Local preview'}
-            </span>
-            <button type="button" className="primary-button compact" onClick={analyzeMeeting}>
-              {status === 'loading' ? 'Analyzing...' : 'Analyze meeting'}
-            </button>
-          </div>
-        </header>
-
-        <div className="hero-grid">
+        <div className="hero-top">
           <div className="hero-copy">
             <p className="section-label">Turn discussion into decisions</p>
-            <h2>Less shiny dashboard, more command center for what the meeting actually means.</h2>
+            <h2>One meeting workspace for summaries, follow-ups, risks, and ownership.</h2>
             <p className="lede">
               Paste a transcript and the app creates a concise summary, clear owners,
               visible risks, and a follow-up draft your team can actually send.
@@ -291,6 +367,19 @@ function App() {
               {featureRail.map((item) => (
                 <span key={item}>{item}</span>
               ))}
+            </div>
+
+            <div className="hero-actions">
+              <span className={source === 'live' ? 'source-pill live' : 'source-pill'}>
+                {source === 'live'
+                  ? 'Live AI'
+                  : source === 'fallback'
+                    ? 'Fallback mode'
+                    : 'Local preview'}
+              </span>
+              <button type="button" className="primary-button" onClick={analyzeMeeting}>
+                {status === 'loading' ? 'Analyzing...' : 'Analyze meeting'}
+              </button>
             </div>
 
             <p className="status-note">{note}</p>
@@ -447,7 +536,130 @@ function App() {
           </section>
         </article>
       </section>
-    </main>
+    </>
+  )
+}
+
+function AboutPage() {
+  return (
+    <section className="content-page">
+      <div className="page-hero">
+        <p className="section-label">About the product</p>
+        <h2>Meeting to Action Notes turns unstructured discussion into work the team can execute.</h2>
+        <p className="lede">
+          The app is designed to reduce note-taking friction after meetings by extracting
+          actions, decisions, risks, and a follow-up draft in one flow.
+        </p>
+      </div>
+
+      <div className="info-grid">
+        <article className="info-card">
+          <h3>What it does</h3>
+          <p>
+            It analyzes a transcript, surfaces action items with likely owners and due
+            dates, summarizes the meeting, and highlights decisions and risks.
+          </p>
+        </article>
+        <article className="info-card">
+          <h3>Why it matters</h3>
+          <p>
+            Teams often leave calls with vague next steps. This product helps convert
+            spoken conversation into accountability and momentum.
+          </p>
+        </article>
+        <article className="info-card">
+          <h3>How it runs</h3>
+          <p>
+            The frontend sends transcript data to a Netlify serverless function, which can
+            call OpenAI securely server-side and return structured output for the UI.
+          </p>
+        </article>
+      </div>
+    </section>
+  )
+}
+
+function AboutUsPage() {
+  return (
+    <section className="content-page">
+      <div className="page-hero">
+        <p className="section-label">About us</p>
+        <h2>{profile.name}</h2>
+        <p className="lede">
+          {profile.name} is a cyber security professional with hands-on experience in web
+          development, Flutter app development, and React app development.
+        </p>
+      </div>
+
+      <div className="profile-card">
+        <div>
+          <p className="field-label">Core strengths</p>
+          <div className="chips">
+            {capabilities.map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+          </div>
+        </div>
+        <p>
+          This site reflects a practical mix of secure thinking and product delivery.
+          The goal is not just to build interfaces, but to create useful tools that can
+          solve real problems while staying robust and production-minded.
+        </p>
+      </div>
+
+      <div className="info-grid">
+        {serviceCards.map((card) => (
+          <article key={card.title} className="info-card">
+            <h3>{card.title}</h3>
+            <p>{card.text}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function ContactPage() {
+  return (
+    <section className="content-page">
+      <div className="page-hero">
+        <p className="section-label">Contact</p>
+        <h2>Let’s talk about secure products, web apps, Flutter, or React work.</h2>
+        <p className="lede">
+          You can reach {profile.name} directly by email or WhatsApp using the details below.
+        </p>
+      </div>
+
+      <div className="contact-grid">
+        <article className="contact-card">
+          <p className="field-label">Email</p>
+          <a href={`mailto:${profile.email}`}>{profile.email}</a>
+        </article>
+        <article className="contact-card">
+          <p className="field-label">WhatsApp</p>
+          <a href={profile.whatsappUrl} target="_blank" rel="noreferrer">
+            {profile.whatsapp}
+          </a>
+        </article>
+        <article className="contact-card">
+          <p className="field-label">Name</p>
+          <span>{profile.name}</span>
+        </article>
+      </div>
+    </section>
+  )
+}
+
+function App() {
+  return (
+    <SiteLayout>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/about-us" element={<AboutUsPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+      </Routes>
+    </SiteLayout>
   )
 }
 
