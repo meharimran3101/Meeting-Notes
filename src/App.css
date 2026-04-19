@@ -684,6 +684,11 @@
   color: #29534b;
 }
 
+.secondary-button {
+  cursor: pointer;
+  font: inherit;
+}
+
 .site-footer {
   display: flex;
   align-items: flex-start;

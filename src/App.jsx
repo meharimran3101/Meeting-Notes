@@ -84,6 +84,11 @@ const defaultWhatsappMessage = encodeURIComponent(
   'Hello Muhammad Imran, I want to discuss a project with you.',
 )
 
+const defaultEmailSubject = encodeURIComponent('Project inquiry for Muhammad Imran')
+const defaultEmailBody = encodeURIComponent(
+  'Hello Muhammad Imran,\n\nI would like to discuss a project with you.\n\nThanks.',
+)
+
 function BrandGlyph() {
   return (
     <svg
@@ -218,6 +223,10 @@ function normalizeAnalysis(payload, fallbackBase) {
         ? payload.confidence
         : fallbackBase.confidence,
   }
+}
+
+function openEmailDraft() {
+  window.location.href = `mailto:${profile.email}?subject=${defaultEmailSubject}&body=${defaultEmailBody}`
 }
 
 function SiteLayout({ children }) {
@@ -723,9 +732,9 @@ function ContactPage() {
         >
           Chat on WhatsApp
         </a>
-        <a className="secondary-link" href={`mailto:${profile.email}`}>
+        <button type="button" className="secondary-link secondary-button" onClick={openEmailDraft}>
           Send email instead
-        </a>
+        </button>
       </div>
     </section>
   )
