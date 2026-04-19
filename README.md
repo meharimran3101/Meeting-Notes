@@ -23,6 +23,8 @@ npm run build
 ```
 
 ## Live AI setup
+Live Demo
+https://meeting-action-notes.netlify.app/
 
 Set these environment variables in Netlify:
 
